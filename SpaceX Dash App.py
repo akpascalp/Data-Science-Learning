@@ -40,7 +40,7 @@ app.layout = html.Div(children=[html.H1('SpaceX Launch Records Dashboard',
                                     min=0, max=10000, step=1000,
                                     marks={0: '0',
                                         100: '100'},
-                                    value=[min_payload, max_payload])
+                                    value=[min_payload, max_payload]),
 
                                 # TASK 4: Add a scatter chart to show the correlation between payload and launch success
                                 html.Div(dcc.Graph(id='success-payload-scatter-chart')),
@@ -53,13 +53,13 @@ app.layout = html.Div(children=[html.H1('SpaceX Launch Records Dashboard',
               Input(component_id='site-dropdown', component_property='value'))
 def get_pie_chart(entered_site):
     if entered_site == 'ALL':
-        data = spacex_df
-        columns = spacex.columns
+        data = spacex_df.groupby('Launch Site')['class'].sum().reset_index(name='class_')
+        columns = spacex_df['Launch Site'].unique()
     else:
         # return the outcomes piechart for a selected site
-        data = spacex_df[entered_site]
-        columns = ['0', '1']
-    fig = px.pie(data, values='class', 
+        data = spacex_df[spacex_df['Launch Site'] == entered_site]['class'].value_counts().reset_index(name='class_')
+        columns = data['class'].unique()
+    fig = px.pie(data, values='class_', 
         names=columns, 
         title=entered_site)
     return fig
@@ -73,9 +73,9 @@ def get_scatter_plot(entered_site, entered_payload):
         data = spacex_df
     else:
         # return the outcomes piechart for a selected site
-        data = spacex_df[entered_site]
-    fig = px.scatter(data, X='Payload Mass (kg)', Y='class',
-        title=entered_site)
+        data = spacex_df[spacex_df['Launch Site'] == entered_site]
+    fig = px.scatter(data, x='Payload Mass (kg)', y='class',
+        title=entered_site, color=data['Booster Version Category'])
     return fig
 
 # Run the app
